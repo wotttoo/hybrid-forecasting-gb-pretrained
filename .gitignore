@@ -1,0 +1,44 @@
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+
+# ===== Virtual environments =====
+.venv/
+venv/
+env/
+ENV/
+
+# ===== Jupyter =====
+.ipynb_checkpoints/
+
+# ===== Environment variables / secrets =====
+.env
+*.key
+
+# ===== OS junk =====
+.DS_Store
+Thumbs.db
+
+# ===== IDE =====
+.vscode/
+.idea/
+
+# ===== Data & outputs (tùy team quyết định giữ hay bỏ) =====
+data/raw/*.csv
+outputs/figures/*.png
+outputs/metrics/*.csv
+
+# Giữ lại cấu trúc thư mục dù file bên trong bị ignore
+!.gitkeep
+
+# ===== Pretrained model cache (nếu dùng Chronos/TimesFM tải về local) =====
+*.ckpt
+*.pt
+*.bin
+.cache/

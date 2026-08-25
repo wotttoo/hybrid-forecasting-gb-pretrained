@@ -1,37 +1,44 @@
 import pandas as pd
 import numpy as np
 
-def create_time_features(df):
+def create_time_features_optimized(df):
     """
-    Tạo các đặc trưng Lag, Rolling Statistics và Date Features từ tập dữ liệu sạch.
-    Đầu vào: DataFrame chứa các cột ['unique_id', 'ds', 'y']
+    Tạo các đặc trưng cho dữ liệu lớn. Tối ưu hóa Groupby và bộ nhớ.
     """
-    # Đảm bảo dữ liệu sắp xếp đúng thứ tự thời gian của từng chuỗi
+    # 1. Sắp xếp (In-place sort nếu có thể để tiết kiệm RAM, nhưng gán lại như bạn cũng ổn)
     df = df.sort_values(by=['unique_id', 'ds']).reset_index(drop=True)
-    
-    # --- 1. Date/Calendar Features (Đặc trưng lịch) ---
-    # Vì là chuỗi Monthly (hàng tháng), các đặc trưng liên quan đến năm, tháng, quý là phù hợp nhất
-    df['year'] = df['ds'].dt.year
-    df['month'] = df['ds'].dt.month
-    df['quarter'] = df['ds'].dt.quarter
-    df['is_quarter_end'] = df['ds'].dt.is_quarter_end.astype(int)
-    
-    # --- 2. Lag Features (Đặc trưng trễ) ---
-    # Cho dữ liệu chu kỳ tháng, các lag phổ biến là 1, 2, 3 (ngắn hạn) và 6, 12 (chu kỳ mùa vụ năm)
+
+    # --- 1. Date/Calendar Features ---
+    # Downcast các biến thời gian về int8 hoặc int16 để tiết kiệm RAM
+    df['year'] = df['ds'].dt.year.astype(np.int16)
+    df['month'] = df['ds'].dt.month.astype(np.int8)
+    df['quarter'] = df['ds'].dt.quarter.astype(np.int8)
+    df['is_quarter_end'] = df['ds'].dt.is_quarter_end.astype(np.int8)
+
+    # --- TỐI ƯU HÓA: Tạo GroupBy object MỘT LẦN ---
+    # Thao tác này giúp Pandas không phải chia nhóm lại từ đầu
+    grouped_y = df.groupby('unique_id')['y']
+
+    # --- 2. Lag Features ---
     lags = [1, 2, 3, 6, 12]
     for lag in lags:
-        df[f'lag_{lag}'] = df.groupby('unique_id')['y'].shift(lag)
-        
-    # --- 3. Rolling Statistics (Thống kê trượt) ---
-    # ĐỂ TRÁNH RÒ RỈ DỮ LIỆU (DATA LEAKAGE):
-    # Ta phải shift(1) trước khi tính rolling. Điều này đảm bảo giá trị thống kê trượt 
-    # tại thời điểm t không bao giờ chứa thông tin của chính mục tiêu y_t mà mô hình cần dự báo.
+        # Cast về float32 để giảm một nửa dung lượng RAM so với float64
+        df[f'lag_{lag}'] = grouped_y.shift(lag).astype(np.float32)
+
+    # --- 3. Rolling Statistics ---
     windows = [3, 6, 12]
+    
+    # TỐI ƯU HÓA: Tái sử dụng cột 'lag_1' thay vì shift(1) lại từ đầu
+    grouped_lag1 = df.groupby('unique_id')['lag_1']
+    
     for w in windows:
-        # Tính trên giá trị đã lag 1 (tức là thông tin quá khứ gần nhất có sẵn tại thời điểm t)
-        df[f'rolling_mean_{w}'] = df.groupby('unique_id')['y'].shift(1).rolling(window=w).mean()
-        df[f'rolling_std_{w}'] = df.groupby('unique_id')['y'].shift(1).rolling(window=w).std()
+        # Gọi .rolling() trên groupby object sẽ sinh ra MultiIndex (unique_id, index_cũ).
+        # Ta dùng .reset_index(level=0, drop=True) để khớp lại đúng với index của df ban đầu
+        rolling_obj = grouped_lag1.rolling(window=w)
         
+        df[f'rolling_mean_{w}'] = rolling_obj.mean().reset_index(level=0, drop=True).astype(np.float32)
+        df[f'rolling_std_{w}']  = rolling_obj.std().reset_index(level=0, drop=True).astype(np.float32)
+
     return df
 
 def make_train_test_split(df, test_horizon=18):

@@ -78,4 +78,7 @@ def load_and_preprocess_m4_monthly(train_path, test_path):
     return train_processed, test_processed
 
 # Gọi hàm
-train_df, test_df = load_and_preprocess_m4_monthly("data/raw/Monthly-train.csv", "data/raw/Monthly-test.csv")
+train_df, test_df = load_and_preprocess_m4_monthly(
+    "data/raw/Train/Monthly-train.csv", 
+    "data/raw/Test/Monthly-test.csv"
+)

@@ -3,6 +3,7 @@ import xgboost as xgb
 import optuna
 import numpy as np
 import pandas as pd
+
 '''
 Các hàm huấn luyện mô hình lightgbm, xgboost
 '''
@@ -20,7 +21,6 @@ def get_lightgbm_params():
         'verbosity': -1
     }
 
-
 def get_xgboost_params():
     return {
         'objective': 'reg:squarederror',
@@ -32,7 +32,6 @@ def get_xgboost_params():
         'tree_method': 'hist',
         'verbosity': 0
     }
-
 
 def train_lightgbm(X_train, y_train, X_val, y_val, params=None, num_rounds=1000):
     if params is None:
@@ -47,6 +46,7 @@ def train_lightgbm(X_train, y_train, X_val, y_val, params=None, num_rounds=1000)
         callbacks=[lgb.early_stopping(50), lgb.log_evaluation(100)]
     )
     return model
+
 def train_xgboost(X_train, y_train, X_val, y_val, params=None, num_rounds=1000):
     if params is None:
         params = get_xgboost_params()
@@ -61,6 +61,7 @@ def train_xgboost(X_train, y_train, X_val, y_val, params=None, num_rounds=1000):
         verbose_eval=100 #in ra giá trị của metrics sau mỗi 100 rounds
     )
     return model
+
 '''
 Các hàm dự đoán của mô hình lightgbm, xgboost
 '''
@@ -69,32 +70,7 @@ def predict_lightgbm(model, X):
 def predict_xgboost(model, X):
     dtest = xgb.DMatrix(X)
     return model.predict(dtest)
-
-'''
-Hàm tính toán các chỉ số đánh giá mô hình
-'''
-def calculate_metrics(y_true, y_pred):
-    from sklearn.metrics import mean_absolute_error, mean_squared_error
-    import numpy as np
-    mae = mean_absolute_error(y_true, y_pred)
-    rmse = np.sqrt(mean_squared_error(y_true, y_pred))
-    mape = np.mean(np.abs((y_true - y_pred) / y_true)) * 100
-    return {'MAE': mae, 'RMSE': rmse, 'MAPE': mape}
-'''
-Phân tích tầm quan trọng của đặc trưng
-'''
-def get_feature_importance_lgb(model, top_n=20):
-    importance = pd.DataFrame({
-        'feature': model.feature_name(),
-        'importance': model.feature_importance()
-    }).sort_values('importance', ascending=False)
-    return importance.head(top_n)
-
-def get_feature_importance_xgb(model, top_n=20):      
-    importance = model.get_booster().get_score(importance_type='weight')
-    df = pd.DataFrame(list(importance.items()), 
-                      columns=['feature', 'importance'])
-    return df.sort_values('importance', ascending=False).head(top_n)   
+ 
 '''
 Thiết lập các hàm mục tiêu lightgbm, xgboost cho optuna để học các bộ tham số tốt nhất
 '''
@@ -129,6 +105,7 @@ def objective_lightgbm(trial, X_train, y_train, X_val, y_val):
     y_pred = model.predict(X_val)
     rmse = np.sqrt(mean_squared_error(y_val, y_pred))
     return rmse
+
 def objective_xgboost(trial, X_train, y_train, X_val, y_val):
     from sklearn.metrics import mean_squared_error
     params = {
@@ -158,6 +135,7 @@ def objective_xgboost(trial, X_train, y_train, X_val, y_val):
     y_pred = model.predict(dval)
     rmse = np.sqrt(mean_squared_error(y_val, y_pred))
     return rmse
+
 '''
 Các hàm tối ưu hóa bộ tham só tốt nhất cho các mô hình lightgbm, xgboost 
 '''
@@ -180,6 +158,7 @@ def optimize_xgboost_params(X_train, y_train, X_val, y_val, n_trials=100, timeou
         show_progress_bar=True
     )
     return study.best_trial.params
+
 def optimize_lightgbm_params(X_train, y_train, X_val, y_val, n_trials=100, timeout=3600, seed=42):
     from optuna.samplers import TPESampler
     from optuna.pruners import MedianPruner
@@ -199,6 +178,7 @@ def optimize_lightgbm_params(X_train, y_train, X_val, y_val, n_trials=100, timeo
         show_progress_bar=True
     )
     return study
+
 def train_with_best_params(study_type, study, X_train, y_train, X_val, y_val):
     best_params = study.best_trial.params
     if study_type == 'lightgbm':
@@ -219,6 +199,7 @@ def train_with_best_params(study_type, study, X_train, y_train, X_val, y_val):
         best_params['verbosity'] = 0
         return train_xgboost(X_train, y_train, X_val, y_val, 
                 params=best_params, num_rounds=1000)
+    
 def plot_optuna_results(study):
     import matplotlib.pyplot as plt
     fig, axes = plt.subplots(2, 2, figsize=(14, 10))

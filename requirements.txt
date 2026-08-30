@@ -8,3 +8,7 @@ lightgbm
 xgboost
 optuna
 shap
+scipy
+ipykernel
+chronos-forecasting==1.5.3
+torch

@@ -5,7 +5,7 @@ def create_time_features_optimized(df):
     """
     Tạo các đặc trưng cho dữ liệu lớn. Tối ưu hóa Groupby và bộ nhớ.
     """
-    # 1. Sắp xếp (In-place sort nếu có thể để tiết kiệm RAM, nhưng gán lại như bạn cũng ổn)
+    # 1. Sắp xếp 
     df = df.sort_values(by=['unique_id', 'ds']).reset_index(drop=True)
 
     # --- 1. Date/Calendar Features ---

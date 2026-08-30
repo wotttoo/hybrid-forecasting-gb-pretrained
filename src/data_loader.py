@@ -1,11 +1,12 @@
 import pandas as pd
 import numpy as np
 
-def read_and_melt_m4(file_path):
+def read_and_melt_m4(file_path, max_series=None):
     """
     Đọc dữ liệu M4 từ CSV và chuyển từ Wide sang Long format.
     """
-    df_wide = pd.read_csv(file_path)
+    read_options = {'nrows': max_series} if max_series is not None else {}
+    df_wide = pd.read_csv(file_path, **read_options)
 
     # Đổi tên cột đầu tiên thành 'unique_id'
     df_wide = df_wide.rename(columns={df_wide.columns[0]: 'unique_id'})
@@ -63,13 +64,13 @@ def generate_monthly_dates(train_long, test_long, start_year=1900):
     return train_long[cols], test_long[cols]
 
 
-def load_and_preprocess_m4_monthly(train_path, test_path):
+def load_and_preprocess_m4_monthly(train_path, test_path, max_series=None):
     """
     Pipeline chính: Điều phối các hàm con để xử lý dữ liệu.
     """
     print("--- Bước 1 & 2: Đọc và Melt dữ liệu ---")
-    train_long = read_and_melt_m4(train_path)
-    test_long = read_and_melt_m4(test_path)
+    train_long = read_and_melt_m4(train_path, max_series=max_series)
+    test_long = read_and_melt_m4(test_path, max_series=max_series)
 
     print("--- Bước 3: Tái tạo mốc thời gian ---")
     train_processed, test_processed = generate_monthly_dates(train_long, test_long)
@@ -77,8 +78,10 @@ def load_and_preprocess_m4_monthly(train_path, test_path):
     print(f"Hoàn thành! Kích thước Train: {train_processed.shape}, Test: {test_processed.shape}")
     return train_processed, test_processed
 
-# Gọi hàm
-train_df, test_df = load_and_preprocess_m4_monthly(
-    "data/raw/Train/Monthly-train.csv", 
-    "data/raw/Test/Monthly-test.csv"
-)
+
+if __name__ == "__main__":
+    # Gọi hàm
+    train_df, test_df = load_and_preprocess_m4_monthly(
+        "data/raw/Train/Monthly-train.csv", 
+        "data/raw/Test/Monthly-test.csv"
+    )

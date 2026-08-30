@@ -30,9 +30,9 @@ Thumbs.db
 .idea/
 
 # ===== Data & outputs (tùy team quyết định giữ hay bỏ) =====
-data/raw/*.csv
-outputs/figures/*.png
-outputs/metrics/*.csv
+# data/raw/*.csv
+# outputs/figures/*.png
+# outputs/metrics/*.csv
 
 # Giữ lại cấu trúc thư mục dù file bên trong bị ignore
 !.gitkeep

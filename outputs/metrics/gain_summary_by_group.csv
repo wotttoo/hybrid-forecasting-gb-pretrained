@@ -1,0 +1,5 @@
+length_group,mean,median,std,count
+cold_start,-0.155,0.177,1.865,104
+long_history,0.612,0.166,1.293,119
+medium,-0.018,0.036,0.786,120
+short,0.146,0.083,1.245,120

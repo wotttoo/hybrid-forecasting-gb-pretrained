@@ -157,7 +157,7 @@ def optimize_xgboost_params(X_train, y_train, X_val, y_val, n_trials=100, timeou
         timeout=timeout,
         show_progress_bar=True
     )
-    return study.best_trial.params
+    return study
 
 def optimize_lightgbm_params(X_train, y_train, X_val, y_val, n_trials=100, timeout=3600, seed=42):
     from optuna.samplers import TPESampler
@@ -192,17 +192,15 @@ def train_with_best_params(study_type, study, X_train, y_train, X_val, y_val):
     if study_type == 'xgboost':
         best_params.update({
             'objective': 'reg:squarederror',
-            'metric': 'rmse',
-            'tree_method': 'hist'
-            # 'verbosity': 0
+            'eval_metric': 'rmse',
+            'tree_method': 'hist',
+            'verbosity': 0
         })
         best_params['verbosity'] = 0
         return train_xgboost(X_train, y_train, X_val, y_val, 
                 params=best_params, num_rounds=1000)
     
 def plot_optuna_results(study):
-    import matplotlib.pyplot as plt
-    fig, axes = plt.subplots(2, 2, figsize=(14, 10))
     optuna.visualization.plot_optimization_history(study).show()
     optuna.visualization.plot_param_importances(study).show()
     optuna.visualization.plot_parallel_coordinate(study).show()

@@ -9,6 +9,8 @@ xgboost
 optuna
 shap
 scipy
+joblib
 ipykernel
+nbformat
 chronos-forecasting==1.5.3
 torch
